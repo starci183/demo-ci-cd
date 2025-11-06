@@ -1,41 +1,47 @@
-# tên của workflow là Docker Image CI
-name: Docker Image CI
+  # tên của workflow là Docker Image CI
+  name: Docker Image CI
 
-# điều kiện trigger
-on:
-  # đẩy code lên branch main
-  push:
-    branches: [ "main" ]
-  # pull request lên branch main
-  pull_request:
-    branches: [ "main" ]
+  # điều kiện trigger
+  on:
+    # đẩy code lên branch main
+    push:
+      branches: [ "main" ]
+    # pull request lên branch main
+    pull_request:
+      branches: [ "main" ]
 
-# mô tả công việc
-jobs:
-  # công việc đầu tiên là build
-  build:
-    # chạy trên máy ảo ubuntu của github
-    runs-on: ubuntu-latest
+  # mô tả công việc
+  jobs:
+    # công việc đầu tiên là build
+    build:
+      # chạy trên máy ảo ubuntu của github
+      runs-on: ubuntu-latest
+      environment: demo-key
 
-    # các bước thực hiện
-    steps:
-      # 1. Checkout code từ repo, clone code về máy
-      - uses: actions/checkout@v4
+      # các bước thực hiện
+      steps:
+        # 1. Checkout code từ repo, clone code về máy
+        - uses: actions/checkout@v4
+        - env:
+            # khi mình chạy code trên luồng ci, cd thì nó sẽ lấy biến môi trường từ 
+            # github secrets thay vì lấy từ file env của máy
+            # khi deploy code lên github thì file env trong máy sẽ bị ignore
+            # chạy với key trên production
+            APP_SECRET: ${{ secrets.APP_SECRET }}
+        # 2. Setup Node.js (để chạy npm run test)
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '20'
 
-      # 2. Setup Node.js (để chạy npm run test)
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+        # 3. Cài dependency
+        - name: Install dependencies
+          run: npm ci
 
-      # 3. Cài dependency
-      - name: Install dependencies
-        run: npm ci
+        # 4. Chạy test
+        - name: Run tests
+          run: npm run test
 
-      # 4. Chạy test
-      - name: Run tests
-        run: npm run test
-
-      # 5. Build image docker
-      - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+        # 5. Build image docker
+        - name: Build the Docker image
+          run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)

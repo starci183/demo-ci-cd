@@ -5,6 +5,8 @@ import { AppService } from './app.service';
 // import { AudioConsumer } from './audio.consumer';
 // import { WsGateway } from './ws.gateway';
 //import { ScheduleModule } from '@nestjs/schedule';
+import { ConfigModule } from '@nestjs/config';
+import config from './config';
 
 @Module({
   imports: [
@@ -19,6 +21,11 @@ import { AppService } from './app.service';
     // BullModule.registerQueue({
     //   name: 'audio',
     // }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [config],
+      envFilePath: ['.env'],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
